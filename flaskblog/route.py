@@ -1,11 +1,13 @@
 
-from flask import render_template, flash, redirect, url_for
+from flask import render_template, flash, redirect, url_for, request
 from datetime import datetime
-from sqlalchemy import or_
+# from sqlalchemy import or_
 from flaskblog.forms import SignUpForm, LoginForm
 from werkzeug.security import generate_password_hash, check_password_hash
 from .models import User, Post, db
 from flask import current_app as app
+from flask_login import login_user, current_user, logout_user, login_required
+
 
 posts = [
     {
@@ -66,28 +68,15 @@ def about():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
     form = SignUpForm()
     if form.validate_on_submit():
-        existing_user = User.query.filter(
-            or_(User.email == form.email.data, User.username == form.username.data)  # type: ignore
-        ).first()
-        
-        if existing_user:
-            if existing_user.email == form.email.data:
-                flash("Email already in use. Please choose a different one.", "danger")
-            elif existing_user.username == form.username.data:
-                flash("Username already in use. Please choose a different one.", "danger")
-            return redirect(url_for('register'))
-        
-        hashPassword = generate_password_hash(form.password.data) # type: ignore
-        username = form.username.data
-        email = form.email.data
-        newUser = User(        
-            username,
-            email,
-            hashPassword)
-        print(newUser)
-        db.session.add(newUser)
+       
+        hashpassword = generate_password_hash(form.password.data) # type: ignore    
+        user = User(username=form.username.data, email=form.email.data, password=hashpassword)# type: ignore
+        # print(user)
+        db.session.add(user)
         db.session.commit()
         
         flash(f"Acccount Created for {form.username.data}!", 'success')
@@ -96,6 +85,8 @@ def register():
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
@@ -103,8 +94,12 @@ def login():
             
             
         if user and check_password_hash(user.password, form.password.data): # type: ignore
+            login_user(user, remember=form.remember.data)
+            next_page = request.args.get('next')
+            
             flash(f"login Success! Welcome, {user.username}!", "success" )
-            return redirect(url_for('home'))
+            print(next_page)
+            return redirect(next_page) if next_page and next_page.startswith('/') else redirect(url_for('home'))
         elif not user:
             flash(f"You don't Have Account! Register first", 'danger')
         # if form.email.data =="ali@gmail.com" and form.password.data =="ali123":
@@ -113,3 +108,16 @@ def login():
         else:
             flash(f"Login UnsuccessFull. Please check email & password", 'danger')
     return render_template('login.html', title='Login', form=form)
+
+@app.route("/logout")
+def logout():
+    logout_user()
+    flash("You have been logged out.", "info")
+
+    return redirect(url_for('home'))
+
+
+@app.route('/account')
+@login_required
+def account():
+    return render_template('account.html', title="Account")    
