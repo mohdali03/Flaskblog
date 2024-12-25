@@ -19,7 +19,7 @@ def createApp():
     db.init_app(app)
     ma.init_app(app)
     login_manager.init_app(app)
-    login_manager.login_view = 'login'
+    login_manager.login_view = 'login' # type: ignore 
     login_manager.login_message_category = 'info'
     with app.app_context():
         from . import route, models

@@ -2,7 +2,7 @@
 from flask import render_template, flash, redirect, url_for, request
 from datetime import datetime
 # from sqlalchemy import or_
-from flaskblog.forms import SignUpForm, LoginForm
+from .forms import SignUpForm, LoginForm,UpdateAccountForm
 from werkzeug.security import generate_password_hash, check_password_hash
 from .models import User, Post, db
 from flask import current_app as app
@@ -120,4 +120,6 @@ def logout():
 @app.route('/account')
 @login_required
 def account():
-    return render_template('account.html', title="Account")    
+    form = UpdateAccountForm()
+    img_file = url_for('static', filename='profile_pics/' + current_user.img_file )
+    return render_template('account.html', title="Account", img_file=img_file, form=form)    
