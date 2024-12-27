@@ -1,0 +1,74 @@
+{% extends "layout.html" %} {% block content %}
+
+<article class="media content-section d-flex">
+  <img
+    class="rounded-circle mt-2 article-img"
+    src="{{ url_for('static', filename='profile_pics/' + post.author.img_file)}}"
+  />
+  <div class="media-body">
+    <div class="article-metadata">
+      <a class="mr-2" href="#">{{ post.author.username }}</a>
+      <small class="text-muted"
+        >{{ post.datePosted.strftime('%B %d, %Y') }}</small
+      >
+      {% if post.author == current_user %}
+      <div>
+        <a
+          class="btn btn-secondary btn-sm m-2"
+          href="{{ url_for('UpdatePost', post_id=post.id) }}"
+          >Update</a
+        >
+        <button
+          type="button"
+          class="btn btn-danger btn-sm m-2"
+          data-bs-toggle="modal"
+          data-bs-target="#deleteModal"
+        >
+          Delete
+        </button>
+      </div>
+      <!-- Button trigger modal -->
+    </div>
+    {% endif %}
+    <h2 class="article-title">{{ post.title }}</h2>
+    <p class="article-content">{{ post.content }}</p>
+  </div>
+</article>
+<!-- Modal -->
+<!-- Modal -->
+<div
+  class="modal fade"
+  id="deleteModal"
+  tabindex="-1"
+  aria-labelledby="deleteModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">Are you sure you want to delete this post?</div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Cancel
+        </button>
+        <form
+          action="{{ url_for('DeletePost', post_id=post.id) }}"
+          method="POST"
+        >
+          <input class="btn btn-danger" type="submit" value="Delete" />
+        </form>
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}

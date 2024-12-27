@@ -1,10 +1,10 @@
 import os
 import secrets
 # from PIL import Image
-from flask import render_template, flash, redirect, url_for, request
+from flask import render_template, flash, redirect, url_for, request, abort
 from datetime import datetime
 # from sqlalchemy import or_
-from .forms import SignUpForm, LoginForm,UpdateAccountForm
+from .forms import SignUpForm, LoginForm,UpdateAccountForm, PostForm
 from werkzeug.security import generate_password_hash, check_password_hash
 from .models import User, Post, db
 from flask import current_app as app
@@ -63,6 +63,8 @@ posts = [
 
 @app.route("/")
 def home():
+    posts = Post.query.all()
+    print(posts)
     return render_template('index.html', posts=posts, title='Home')
 
 @app.route("/about")
@@ -106,9 +108,6 @@ def login():
         elif not user:
             flash(f"You don't Have Account! Register first", 'danger')
             return redirect(url_for('register'))
-        # if form.email.data =="ali@gmail.com" and form.password.data =="ali123":
-        #     username = form.email.data.split("@")
-        #     flash(f"Login Succes {username[0]}!", "success")
         else:
             flash(f"Login UnsuccessFull. Please check email & password", 'danger')
     return render_template('login.html', title='Login', form=form)
@@ -161,3 +160,56 @@ def account():
         img_file = url_for('static', filename='profile_pics/default.png')  # Add a default image if none exists
     
     return render_template('account.html', title="Account", img_file=img_file, form=form)
+
+@app.route("/post/new", methods=['GET', 'POST'])
+@login_required
+def newPost():
+    form = PostForm()
+    if form.validate_on_submit():
+        post = Post(title=form.title.data, content=form.content.data, author=current_user) # type:ignore
+        flash("Your post has been created!", 'success')
+        db.session.add(post)
+        db.session.commit()
+        return redirect(url_for('home'))
+    return render_template('createPost.html', title="New Post", form=form, legend='New Post')
+
+
+@app.route("/post/<int:post_id>")
+def post(post_id):
+    post = Post.query.get_or_404(post_id)
+    return render_template("post.html", title=post.title, post=post)
+
+
+@app.route("/post/<int:post_id>/update", methods=['GET', 'POST'])
+def UpdatePost(post_id):
+    post = Post.query.get_or_404(post_id)
+    # return render_template("post.html", title=post.title, post=post)
+    if post.author != current_user:
+        abort(403)
+    form = PostForm()
+    if form.validate_on_submit():
+        post.title = form.title.data
+        post.content = form.content.data
+        db.session.commit()
+        flash("Your Post has Been Update!", "success")
+        return redirect(url_for('post', post_id=post.id))
+    elif request.method == "GET": 
+        form.title.data = post.title
+        form.content.data = post.content
+    
+    return render_template('createPost.html', title="Update Post", form=form, legend='Update Post')
+    
+@app.route('/DeletePost/<int:post_id>', methods = ['POST'])
+def DeletePost(post_id):
+    post = Post.query.get_or_404(post_id) 
+    if post.author != current_user:
+        abort(403)
+    db.session.delete(post)
+    db.session.commit()
+    flash("Your post has been deleted!", "danger")
+    return redirect(url_for('home'))
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html', title='404'), 404
+

@@ -42,11 +42,16 @@ body {
   }
   
   .article-img {
-    height: 65px;
-    width: 65px;
-    margin-right: 16px;
+    height: 55px;
+    width: 55px;
+    margin-right: 10px;
   }
-  
+  textarea {
+    overflow: hidden;
+    /* resize: none; */
+    
+    transition: height 0.2s ease;
+  }
   .article-metadata {
     padding-bottom: 1px;
     margin-bottom: 4px;
@@ -55,6 +60,10 @@ body {
   
   .article-metadata a:hover {
     color: #333;
+    text-decoration: none;
+  }
+  .article-metadata a {
+    /* color: #333; */
     text-decoration: none;
   }
   
@@ -71,6 +80,12 @@ body {
     margin-bottom: 16px;
   }
   
+  .account-img {
+    height: 125px;
+    width: 125px;
+    margin-right: 20px;
+    margin-bottom: 16px;
+  }
   .account-heading {
     font-size: 2.5rem;
   }

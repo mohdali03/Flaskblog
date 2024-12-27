@@ -1,8 +1,8 @@
 {% extends "layout.html" %} {% block content %}
 <div class="content-section">
-    <div class="media">
-        <div class="media-body">
-            <img class="rounded-circle account-img" src="{{ img_file }}" />
+    <div class="media d-flex gap-3">
+        <img class="rounded-circle account-img" src="{{ img_file }}" />
+        <div class="media-body mt-4 ">
             <h2 class="account-heading">{{ current_user.username}}</h2>
             <p class="text-secondary">{{ current_user.email }}</p>
             <!-- <img> -->
