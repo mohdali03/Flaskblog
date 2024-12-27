@@ -50,6 +50,14 @@ coverage.xml
 # Translations
 *.mo
 *.pot
+# Virtual Environment
+env/
+
+# Compiled files
+__pycache__/
+
+# Flask instance folder
+instance/
 
 # Django stuff:
 *.log
