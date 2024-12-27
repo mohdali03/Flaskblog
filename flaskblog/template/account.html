@@ -9,7 +9,7 @@
         </div>
     </div>
 
-    <form method="POST" action="" class="">
+    <form method="POST" action="" class="" enctype="multipart/form-data">
         {{ form.hidden_tag() }}
         <fieldset class="form-group">
             <lengend class="border-bottom mb-4">Account Info</lengend>
@@ -26,20 +26,32 @@
                 endif %}
             </div>
             <div class="form-group mb-4">
-                {{ form.email.label(class="form-control-label") }} {% if
-                form.email.errors %} {{ form.email(class="form-control form-control
-                is-invalid") }}
-                <div class="invalid-feedback">
-                    {% for error in form.email.errors %}
-                    <span>{{ error }}</span>
-                    {% endfor %} {% else %} {{ form.email(class="form-control
-                    form-control") }} {% endif %}
-                </div>
+                {{ form.email.label(class="form-control-label") }}
+                 {% if form.email.errors %} 
+                 {{ form.email(class="form-control form-control is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.email.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %} 
+                    </div>
+                        {% else %} 
+                        {{ form.email(class="form-control form-control") }} 
+                        {% endif %}
             </div>
-            <div class="form-group mb-4">
-                {{ form.submit(class="btn btn-outline-info") }}
+
+            <div class="form-group">
+                {{ form.picture.label() }}
+                {{ form.picture(class="form-control-file") }}
+                {% if form.picture.errors %}
+                    {% for error in form.picture.errors %}
+                        <span class="text-danger">{{ error }}</span></br>
+                    {% endfor %}
+                {% endif %}
             </div>
         </fieldset>
+        <div class="form-group mb-4">
+            {{ form.submit(class="btn btn-outline-info") }}
+        </div>
     </form>
 </div>
 {% endblock %}
