@@ -1,5 +1,13 @@
-{% extends "layout.html" %} {% block content %} {% for post in posts.items %}
+{% extends "layout.html" %} {% block content %}
 
+    <!-- <img class="rounded-circle account-img" src="{{ user.img_file }}" /> -->
+    <div class="media-body mt-4 ">
+        <h1 class="mb-3">Posts by {{ user.username | title }} </h1>
+        <h3 class="mb-3"> Total Post: {{ posts.total }} </h3>
+        <!-- <img> -->
+    </div>
+
+{% for post in posts.items %}
 <article class="media content-section d-flex">
   <img
     class="rounded-circle mt-2 article-img"
@@ -26,7 +34,7 @@
 <ul class="pagination justify-content-end">
   {% if posts.has_prev %}
   <li class="page-item">
-    <a class="page-link" href="{{ url_for('home', page=posts.prev_num) }}">&laquo;</a>
+    <a class="page-link" href="{{ url_for('user', username=user.username, page=posts.prev_num) }}">&laquo;</a>
   </li>
   {% else %}
   <li class="page-item disabled">
@@ -37,7 +45,7 @@
   {% for pageNum in posts.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
     {% if pageNum %}
     <li class="page-item {% if posts.page == pageNum %}active{% endif %}">
-      <a class="page-link" href="{{ url_for('home', page=pageNum) }}">{{ pageNum }}</a>
+      <a class="page-link" href="{{ url_for('user', username=user.username, page=pageNum) }}">{{ pageNum }}</a>
     </li>
     {% else %}
     <li class="page-item disabled"><span class="page-link">...</span></li>
@@ -46,7 +54,7 @@
 
   {% if posts.has_next %}
   <li class="page-item">
-    <a class="page-link" href="{{ url_for('home', page=posts.next_num) }}">&raquo;</a>
+    <a class="page-link" href="{{ url_for('user', username=user.username, page=posts.next_num) }}">&raquo;</a>
   </li>
   {% else %}
   <li class="page-item disabled">

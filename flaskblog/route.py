@@ -60,11 +60,44 @@ posts = [
         "comments": []
     }
 ]
-
+'''
+Title: "Mastering Python: Top 10 Beginner Tips"
+Content:
+Python is one of the easiest programming languages to learn. Start with understanding variables, loops, and functions. Explore libraries like NumPy and Pandas for data analysis.
+Title: "The Power of SQL: Why Every Developer Should Learn It"
+Content:
+SQL is the backbone of managing data in modern applications. Learn about queries, joins, and how to optimize database performance to enhance your applications.
+Title: "5 Quick Tips for Clean and Efficient Code"
+Content:
+Writing clean code is essential for collaboration. Use meaningful variable names, write modular functions, and always document your code for better readability.
+Title: "The Role of Flask in Web Development"
+Content:
+Flask is a lightweight Python web framework perfect for building APIs and dynamic websites. Learn how to set up routes, templates, and handle requests efficiently.
+Title: "Understanding RESTful APIs: A Beginner’s Guide"
+Content:
+RESTful APIs are the cornerstone of modern web applications. Learn about HTTP methods, status codes, and how to design scalable APIs for your projects.
+Title: "Why Git and GitHub Are Essential for Developers"
+Content:
+Version control is crucial for developers. Learn the basics of Git, branching, and how to collaborate on projects using GitHub repositories.
+Title: "Exploring JavaScript Frameworks: React vs Angular"
+Content:
+Both React and Angular are powerful tools for building interactive web applications. Compare their features, use cases, and decide which fits your project best.
+Title: "Boost Your Productivity with VS Code Extensions"
+Content:
+Discover must-have VS Code extensions like Prettier for formatting, GitLens for version control, and Live Server for real-time web development.
+Title: "Introduction to Machine Learning with Python"
+Content:
+Machine learning is transforming industries. Start with libraries like Scikit-learn and TensorFlow, and learn to create basic models for predictions and analysis.
+Title: "How to Build a Blog App with Flask"
+Content:
+Learn to create a functional blog app using Flask. Cover topics like setting up routes, integrating a database, user authentication, and deploying your app online.
+'''
 @app.route("/")
 def home():
-    posts = Post.query.all()
-    print(posts)
+    page = request.args.get('page', 1, type=int)
+    posts = Post.query.order_by(Post.datePosted.desc()).paginate(per_page=2, page=page)
+    for pagen in posts.iter_pages():  
+        print(pagen)
     return render_template('index.html', posts=posts, title='Home')
 
 @app.route("/about")
@@ -120,12 +153,11 @@ def logout():
     return redirect(url_for('home'))
 
 def save_picture(form_picture):
-    # Generate a random file name to avoid conflicts
+ 
     random_hex = secrets.token_hex(8)
     _, f_ext = os.path.splitext(form_picture.filename)
     picture_fn = random_hex + f_ext
     picture_path = os.path.join(app.root_path, 'static/profile_pics', picture_fn)
-    # Ensure the directory exists
     os.makedirs(os.path.dirname(picture_path), exist_ok=True)
     output_size= (125,125)
     i = Image.open(form_picture)
@@ -170,7 +202,7 @@ def newPost():
         flash("Your post has been created!", 'success')
         db.session.add(post)
         db.session.commit()
-        return redirect(url_for('home'))
+        return redirect(url_for('newPost'))
     return render_template('createPost.html', title="New Post", form=form, legend='New Post')
 
 
@@ -208,6 +240,14 @@ def DeletePost(post_id):
     db.session.commit()
     flash("Your post has been deleted!", "danger")
     return redirect(url_for('home'))
+
+@app.route("/user/<string:username>")
+def user(username):
+    page= request.args.get('page', 1, type=int)
+    user = User.query.filter_by(username=username).first_or_404()
+    posts = Post.query.filter_by(author=user).order_by(Post.datePosted.desc()).paginate(page=page,per_page=3)
+    # print(user_post)
+    return render_template('user.html', title="User Post", posts=posts, user=user)
 
 @app.errorhandler(404)
 def page_not_found(e):
