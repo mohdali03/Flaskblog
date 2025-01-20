@@ -2,14 +2,17 @@ import os
 import secrets
 # from PIL import Image
 from flask import render_template, flash, redirect, url_for, request, abort
-from datetime import datetime
+
 # from sqlalchemy import or_
-from .forms import SignUpForm, LoginForm,UpdateAccountForm, PostForm
+
 from werkzeug.security import generate_password_hash, check_password_hash
 from .models import User, Post, db
 from flask import current_app as app
 from PIL import Image
 from flask_login import login_user, current_user, logout_user, login_required
+from flask_mail import Message
+from . import mail
+
 
 
 posts = [
@@ -92,6 +95,7 @@ Title: "How to Build a Blog App with Flask"
 Content:
 Learn to create a functional blog app using Flask. Cover topics like setting up routes, integrating a database, user authentication, and deploying your app online.
 '''
+
 @app.route("/")
 def home():
     page = request.args.get('page', 1, type=int)
@@ -104,152 +108,41 @@ def home():
 def about():
     return render_template('about.html', title='About')
 
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    if current_user.is_authenticated:
-        return redirect(url_for('home'))
-    form = SignUpForm()
-    if form.validate_on_submit():
-       
-        hashpassword = generate_password_hash(form.password.data) # type: ignore    
-        user = User(username=form.username.data, email=form.email.data, password=hashpassword)# type: ignore
-        # print(user)
-        db.session.add(user)
-        db.session.commit()
-        
-        flash(f"Acccount Created for {form.username.data}!", 'success')
-        return redirect(url_for('home'))
-    return render_template('register.html', title='Register', form=form)
-
-@app.route("/login", methods=['GET', 'POST'])
-def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('home'))
-    form = LoginForm()
-    if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
-        # if user:
-            
-            
-        if user and check_password_hash(user.password, form.password.data): # type: ignore
-            login_user(user, remember=form.remember.data)
-            next_page = request.args.get('next')
-            
-            flash(f"login Success! Welcome, {user.username}!", "success" )
-            print(next_page)
-            return redirect(next_page) if next_page and next_page.startswith('/') else redirect(url_for('home'))
-        elif not user:
-            flash(f"You don't Have Account! Register first", 'danger')
-            return redirect(url_for('register'))
-        else:
-            flash(f"Login UnsuccessFull. Please check email & password", 'danger')
-    return render_template('login.html', title='Login', form=form)
-
-@app.route("/logout")
-def logout():
-    logout_user()
-    flash("You have been logged out.", "info")
-
-    return redirect(url_for('home'))
-
-def save_picture(form_picture):
- 
-    random_hex = secrets.token_hex(8)
-    _, f_ext = os.path.splitext(form_picture.filename)
-    picture_fn = random_hex + f_ext
-    picture_path = os.path.join(app.root_path, 'static/profile_pics', picture_fn)
-    os.makedirs(os.path.dirname(picture_path), exist_ok=True)
-    output_size= (125,125)
-    i = Image.open(form_picture)
-    i.thumbnail(output_size)
-
-    # Save the uploaded file
-    i.save(picture_path)
-    return picture_fn
-
-@app.route('/account', methods=['POST', 'GET'])
-@login_required
-def account():
-    form = UpdateAccountForm()
-    if form.validate_on_submit():
-        if form.picture.data:
-            picture_file = save_picture(form.picture.data)
-            current_user.img_file = picture_file
-            print(f"Uploaded Picture: {picture_file}")
-        current_user.username = form.username.data
-        current_user.email = form.email.data
-        db.session.commit()
-        flash('Your account has been updated!', 'success')
-        return redirect(url_for('account'))
-    elif request.method == 'GET':
-        # Pre-fill the form with current user's data
-        form.username.data = current_user.username
-        form.email.data = current_user.email
-
-    if current_user.img_file:
-        img_file = url_for('static', filename='profile_pics/' + current_user.img_file)
-    else:
-        img_file = url_for('static', filename='profile_pics/default.png')  # Add a default image if none exists
+def send_resetEmail(user):
     
-    return render_template('account.html', title="Account", img_file=img_file, form=form)
+        token = user.get_reset_token()
+        msg = Message("Password Reset Request", sender='noreply@demo.com',
+                    recipients=[user.email])
+        msg.html = f''' <!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>Password Reset</title>
+      </head>
+      <body style="font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f7ff;">
+        <div style="max-width: 600px; margin: 20px auto; background: white; border-radius: 10px; overflow: hidden;">
+          <header style="background-color: #4CAF50; padding: 20px; text-align: center; color: white; font-size: 24px;">
+            Password Reset Request
+          </header>
+          <main style="padding: 20px;  text-align: center;">
+            <p style='text-align: center;' >Hi {user.username},</p>
+            <p style='text-align: center;' >We received a request to reset your password. Click the link below to reset it:</p>
+            <a href="{url_for('users.reset_token', token=token, _external=True)}" style="display: inline-block; margin: 20px 0; padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; text-align: center;">Reset Password</a>
+            <p>If you did not request this, please ignore this email and your password will remain unchanged.</p>
+          </main>
+          <footer style="background-color: #f1f1f1; padding: 10px; text-align: center; font-size: 12px;">
+            
+            <p>&copy; 2024 Flask Blog. All rights reserved.</p>
+          </footer>
+        </div>
+      </body>
+    </html>
+        '''
 
-@app.route("/post/new", methods=['GET', 'POST'])
-@login_required
-def newPost():
-    form = PostForm()
-    if form.validate_on_submit():
-        post = Post(title=form.title.data, content=form.content.data, author=current_user) # type:ignore
-        flash("Your post has been created!", 'success')
-        db.session.add(post)
-        db.session.commit()
-        return redirect(url_for('newPost'))
-    return render_template('createPost.html', title="New Post", form=form, legend='New Post')
-
-
-@app.route("/post/<int:post_id>")
-def post(post_id):
-    post = Post.query.get_or_404(post_id)
-    return render_template("post.html", title=post.title, post=post)
-
-
-@app.route("/post/<int:post_id>/update", methods=['GET', 'POST'])
-def UpdatePost(post_id):
-    post = Post.query.get_or_404(post_id)
-    # return render_template("post.html", title=post.title, post=post)
-    if post.author != current_user:
-        abort(403)
-    form = PostForm()
-    if form.validate_on_submit():
-        post.title = form.title.data
-        post.content = form.content.data
-        db.session.commit()
-        flash("Your Post has Been Update!", "success")
-        return redirect(url_for('post', post_id=post.id))
-    elif request.method == "GET": 
-        form.title.data = post.title
-        form.content.data = post.content
+        mail.send(msg)
     
-    return render_template('createPost.html', title="Update Post", form=form, legend='Update Post')
+
+    # form = ResetPasswordForm()
     
-@app.route('/DeletePost/<int:post_id>', methods = ['POST'])
-def DeletePost(post_id):
-    post = Post.query.get_or_404(post_id) 
-    if post.author != current_user:
-        abort(403)
-    db.session.delete(post)
-    db.session.commit()
-    flash("Your post has been deleted!", "danger")
-    return redirect(url_for('home'))
-
-@app.route("/user/<string:username>")
-def user(username):
-    page= request.args.get('page', 1, type=int)
-    user = User.query.filter_by(username=username).first_or_404()
-    posts = Post.query.filter_by(author=user).order_by(Post.datePosted.desc()).paginate(page=page,per_page=3)
-    # print(user_post)
-    return render_template('user.html', title="User Post", posts=posts, user=user)
-
-@app.errorhandler(404)
-def page_not_found(e):
-    return render_template('404.html', title='404'), 404
-

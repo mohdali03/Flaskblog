@@ -15,7 +15,12 @@
       <div>
         <a
           class="btn btn-secondary btn-sm m-2"
-          href="{{ url_for('UpdatePost', post_id=post.id) }}"
+          href="{{ url_for('posts.UpdatePost', post_id=post.id) }}"
+          >Update</a
+        >
+        <a
+          class="btn btn-danger btn-sm m-2"
+          href="{{ url_for('posts.UpdatePost', post_id=post.id) }}"
           >Update</a
         >
         <button
@@ -60,7 +65,7 @@
           Cancel
         </button>
         <form
-          action="{{ url_for('DeletePost', post_id=post.id) }}"
+          action="{{ url_for('posts.DeletePost', post_id=post.id) }}"
           method="POST"
         >
           <input class="btn btn-danger" type="submit" value="Delete" />

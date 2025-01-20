@@ -15,13 +15,13 @@
   />
   <div class="media-body">
     <div class="article-metadata">
-      <a class="mr-2" href="{{ url_for('user', username=post.author.username )}}">{{ post.author.username }}</a>
+      <a class="mr-2" href="{{ url_for('users.user', username=post.author.username )}}">{{ post.author.username }}</a>
       <small class="text-muted"
         >{{ post.datePosted.strftime('%B %d, %Y') }}</small
       >
     </div>
     <h2>
-      <a class="article-title" href="{{ url_for('post', post_id=post.id) }}"
+      <a class="article-title" href="{{ url_for('posts.post', post_id=post.id) }}"
         >{{ post.title }}</a
       >
     </h2>
@@ -34,7 +34,7 @@
 <ul class="pagination justify-content-end">
   {% if posts.has_prev %}
   <li class="page-item">
-    <a class="page-link" href="{{ url_for('user', username=user.username, page=posts.prev_num) }}">&laquo;</a>
+    <a class="page-link" href="{{ url_for('users.user', username=user.username, page=posts.prev_num) }}">&laquo;</a>
   </li>
   {% else %}
   <li class="page-item disabled">
@@ -45,7 +45,7 @@
   {% for pageNum in posts.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
     {% if pageNum %}
     <li class="page-item {% if posts.page == pageNum %}active{% endif %}">
-      <a class="page-link" href="{{ url_for('user', username=user.username, page=pageNum) }}">{{ pageNum }}</a>
+      <a class="page-link" href="{{ url_for('users.user', username=user.username, page=pageNum) }}">{{ pageNum }}</a>
     </li>
     {% else %}
     <li class="page-item disabled"><span class="page-link">...</span></li>
@@ -54,7 +54,7 @@
 
   {% if posts.has_next %}
   <li class="page-item">
-    <a class="page-link" href="{{ url_for('user', username=user.username, page=posts.next_num) }}">&raquo;</a>
+    <a class="page-link" href="{{ url_for('users.user', username=user.username, page=pageNum) }}">&raquo;</a>
   </li>
   {% else %}
   <li class="page-item disabled">
